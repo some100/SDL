@@ -240,6 +240,10 @@
 #define __3DS__ 1
 #endif
 
+#if defined(__N64__)
+#undef __N64__
+#define __N64__ 1
+#endif
 #include "begin_code.h"
 /* Set up for C function definitions, even when using C++ */
 #ifdef __cplusplus

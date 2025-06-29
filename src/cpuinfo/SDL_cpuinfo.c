@@ -106,6 +106,10 @@
 #include <kernel.h>
 #endif
 
+#ifdef __N64__
+#include <n64sys.h>
+#endif
+
 #define CPU_HAS_RDTSC    (1 << 0)
 #define CPU_HAS_ALTIVEC  (1 << 1)
 #define CPU_HAS_MMX      (1 << 2)
@@ -481,6 +485,8 @@ static int CPU_haveNEON(void)
 #elif defined(__VITA__)
     return 1;
 #elif defined(__3DS__)
+    return 0;
+#elif defined(__N64__)
     return 0;
 #elif defined(__APPLE__) && defined(__ARM_ARCH) && (__ARM_ARCH >= 7)
     /* (note that sysctlbyname("hw.optional.neon") doesn't work!) */
@@ -1167,6 +1173,12 @@ int SDL_GetSystemRAM(void)
         if (SDL_SystemRAM <= 0) {
             /* PlayStation 2 has 32MiB however there are some special models with 64 and 128 */
             SDL_SystemRAM = GetMemorySize();
+        }
+#endif
+#ifdef __N64__
+        if (SDL_SystemRAM <= 0) {
+            /* N64 has 4MiB, with an additional 4MiB with the Expansion Pak */
+            SDL_SystemRAM = is_memory_expanded() ? 8388608 : 4194304;
         }
 #endif
 #endif

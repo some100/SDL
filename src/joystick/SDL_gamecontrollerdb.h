@@ -1000,6 +1000,9 @@ static const char *s_ControllerMappings[] = {
 #ifdef SDL_JOYSTICK_N3DS
     "000000004e696e74656e646f20334400,Nintendo 3DS,crc:3210,a:b0,b:b1,back:b2,dpdown:b7,dpleft:b5,dpright:b4,dpup:b6,leftshoulder:b9,lefttrigger:b14,leftx:a0,lefty:a1,rightshoulder:b8,righttrigger:b15,rightx:a2,righty:a3,start:b3,x:b10,y:b11,",
 #endif
+#ifdef SDL_JOYSTICK_N64
+    "00001c5e4e363420436f6e74726f6c00,N64 Controller,a:b0,b:b1,start:b3,dpup:b4,dpdown:b5,dpleft:b6,dpright:b7,rightshoulder:b8,leftshoulder:b2,leftx:a0,lefty:a1,rightx:a2,righty:a3,",
+#endif
     "hidapi,*,a:b0,b:b1,back:b4,dpdown:b12,dpleft:b13,dpright:b14,dpup:b11,guide:b5,leftshoulder:b9,leftstick:b7,lefttrigger:a4,leftx:a0,lefty:a1,rightshoulder:b10,rightstick:b8,righttrigger:a5,rightx:a2,righty:a3,start:b6,x:b2,y:b3,",
     NULL
 };

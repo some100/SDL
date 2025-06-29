@@ -28,7 +28,7 @@
 
 /* #define DEBUG_TIMERS */
 
-#if !defined(__EMSCRIPTEN__) || !defined(SDL_THREADS_DISABLED)
+#if !defined(__EMSCRIPTEN__) && !defined(__N64__) || !defined(SDL_THREADS_DISABLED)
 
 typedef struct _SDL_Timer
 {
@@ -367,7 +367,7 @@ SDL_bool SDL_RemoveTimer(SDL_TimerID id)
     return canceled;
 }
 
-#else
+#elif defined(__EMSCRIPTEN__)
 
 #include <emscripten/emscripten.h>
 #include <emscripten/eventloop.h>
@@ -465,6 +465,105 @@ SDL_bool SDL_RemoveTimer(SDL_TimerID id)
         emscripten_clear_timeout(entry->timeoutID);
         SDL_free(entry);
 
+        return SDL_TRUE;
+    }
+    return SDL_FALSE;
+}
+
+#elif defined(__N64__)
+
+#include <n64sys.h>
+#include <timer.h>
+
+typedef struct _SDL_TimerMap
+{
+    timer_link_t *timer;
+    int timerID;
+    SDL_TimerCallback callback;
+    void* param;
+    Uint32 interval;
+    struct _SDL_TimerMap *next;
+} SDL_TimerMap;
+
+typedef struct _SDL_TimerData
+{
+    int nextID;
+    SDL_TimerMap *timermap;
+} SDL_TimerData;
+
+static SDL_TimerData SDL_timer_data;
+
+static void timer_callback(int ovfl, void *ctx)
+{
+    SDL_TimerMap *entry = (SDL_TimerMap *)ctx;
+
+    entry->interval = entry->callback(entry->interval, entry->param);
+    if (entry->interval > 0) {
+        start_timer_context(entry->timer, TICKS_FROM_MS(entry->interval), TF_CONTINUOUS, &timer_callback, (void *)entry);
+    }
+}
+
+int SDL_TimerInit(void)
+{
+    return 0;
+}
+
+void SDL_TimerQuit(void)
+{
+    SDL_TimerData *data = &SDL_timer_data;
+    SDL_TimerMap *entry;
+
+    while (data->timermap) {
+        entry = data->timermap;
+        data->timermap = entry->next;
+        delete_timer(entry->timer);
+        SDL_free(entry);
+    }
+}
+
+SDL_TimerID SDL_AddTimer(Uint32 interval, SDL_TimerCallback callback, void *param)
+{
+    SDL_TimerData *data = &SDL_timer_data;
+    SDL_TimerMap *entry;
+
+    entry = (SDL_TimerMap *)SDL_malloc(sizeof(*entry));
+    if (!entry) {
+        SDL_OutOfMemory();
+        return 0;
+    }
+    entry->timerID = ++data->nextID;
+    entry->callback = callback;
+    entry->param = param;
+    entry->interval = interval;
+
+    entry->timer = new_timer_context(TICKS_FROM_MS(interval), TF_CONTINUOUS, &timer_callback, (void *)entry);
+
+    entry->next = data->timermap;
+    data->timermap = entry;
+
+    return entry->timerID;
+}
+
+SDL_bool SDL_RemoveTimer(SDL_TimerID id)
+{
+    SDL_TimerData *data = &SDL_timer_data;
+    SDL_TimerMap *prev, *entry;
+
+    prev = NULL;
+    for (entry = data->timermap; entry; prev = entry, entry = entry->next) {
+        if (entry->timerID == id) {
+            if (prev) {
+                prev->next = entry->next;
+            } else {
+                data->timermap = entry->next;
+            }
+            break;
+        }
+    }
+
+    if (entry) {
+        delete_timer(entry->timer);
+        SDL_free(entry);
         return SDL_TRUE;
     }
     return SDL_FALSE;

@@ -1,0 +1,77 @@
+include $(N64_INST)/include/n64.mk
+
+SOURCE_DIR = src
+BUILD_DIR = build
+
+TARGET = $(BUILD_DIR)/libSDL2.a
+
+DEFINES = -D__N64__ -DLIBDRAGON_FAST_MATH -DSDL_LEAN_AND_MEAN
+
+CFLAGS += -I./include -Wno-error=format $(DEFINES)
+
+INCLUDE_DIR = $(N64_INST)/mips64-elf/include
+LIB_DIR = $(N64_INST)/mips64-elf/lib
+
+SOURCES = \
+	src/*.c \
+	src/atomic/*.c \
+	src/audio/*.c \
+	src/audio/dummy/*.c \
+	src/audio/n64/*.c \
+	src/cpuinfo/*.c \
+	src/events/*.c \
+	src/file/*.c \
+	src/haptic/*.c \
+	src/haptic/dummy/*.c \
+	src/hidapi/*.c \
+	src/joystick/*.c \
+	src/joystick/n64/*.c \
+	src/loadso/dlopen/*.c \
+	src/power/*.c \
+	src/filesystem/n64/*.c \
+	src/locale/*.c \
+	src/locale/dummy/*.c \
+	src/main/n64/*.c \
+	src/misc/*.c \
+	src/misc/dummy/*.c \
+	src/render/*.c \
+	src/render/n64/*.c \
+	src/render/software/*.c \
+	src/sensor/*.c \
+	src/sensor/dummy/*.c \
+	src/stdlib/*.c \
+	src/libm/*.c \
+	src/thread/*.c \
+	src/thread/generic/*.c \
+	src/timer/*.c \
+	src/timer/n64/*.c \
+	src/video/*.c \
+	src/video/yuv2rgb/*.c \
+	src/video/n64/*.c
+
+HEADERS = $(wildcard include/*.h)
+OBJECTS = $(addprefix $(BUILD_DIR)/, $(shell echo $(SOURCES) | sed -e 's,\.c,\.o,g'))
+
+.PHONY: clean all install
+
+$(BUILD_DIR)/%.o: %.c
+	@mkdir -p $(dir $@)
+	@echo "    [CC] $<"
+	$(N64_CC) -c $(N64_CFLAGS) $(CFLAGS) -o $@ $<
+
+all: $(TARGET)
+
+$(TARGET): $(OBJECTS)
+	@echo "    [AR] $@"
+	$(N64_AR) rcs -o $@ $^
+
+install: $(TARGET)
+	mkdir -p $(INCLUDE_DIR)/SDL2
+	install -m 0644 sdl2-inst.mk $(N64_INST)/include/sdl2.mk
+	for header in $(HEADERS); do \
+		install -m 0644 $$header $(INCLUDE_DIR)/SDL2; \
+	done
+	install -m 0644 $(TARGET) $(LIB_DIR)
+
+clean:
+	rm -rf $(BUILD_DIR)

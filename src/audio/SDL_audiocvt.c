@@ -60,6 +60,10 @@
 #endif
 #endif
 
+#ifndef SDL_AUDIO_DRIVER_N64
+#define SDL_AUDIO_DRIVER_N64 0
+#endif
+
 /*
  * CHANNEL LAYOUTS AS SDL EXPECTS THEM:
  *
@@ -338,9 +342,11 @@ static int SDL_BuildAudioTypeCVTToFloat(SDL_AudioCVT *cvt, const SDL_AudioFormat
     int retval = 0; /* 0 == no conversion necessary. */
 
     if ((SDL_AUDIO_ISBIGENDIAN(src_fmt) != 0) == (SDL_BYTEORDER == SDL_LIL_ENDIAN) && SDL_AUDIO_BITSIZE(src_fmt) > 8) {
+#if !SDL_AUDIO_DRIVER_N64
         if (SDL_AddAudioCVTFilter(cvt, SDL_Convert_Byteswap) < 0) {
             return -1;
         }
+#endif
         retval = 1; /* added a converter. */
     }
 
@@ -440,9 +446,11 @@ static int SDL_BuildAudioTypeCVTFromFloat(SDL_AudioCVT *cvt, const SDL_AudioForm
     }
 
     if ((SDL_AUDIO_ISBIGENDIAN(dst_fmt) != 0) == (SDL_BYTEORDER == SDL_LIL_ENDIAN) && SDL_AUDIO_BITSIZE(dst_fmt) > 8) {
+#if !SDL_AUDIO_DRIVER_N64
         if (SDL_AddAudioCVTFilter(cvt, SDL_Convert_Byteswap) < 0) {
             return -1;
         }
+#endif
         retval = 1; /* added a converter. */
     }
 
